@@ -113,17 +113,7 @@ class GenerateCtrfReport implements Reporter {
   private updateCtrfTestResultsFromTestResult(files: File[] | undefined): void {
     try {
       files?.forEach((file: File) => {
-        const fileTest: CtrfTest = {
-          name: file.name,
-          duration: file.result?.duration ?? 0,
-          status: this.mapStatus(
-            file.result?.state ? file.result?.state : file?.mode
-          ),
-        };
-
-        this.ctrfReport.results.tests.push(fileTest);
-
-
+        
         file.tasks.forEach((taskslist: any) => {
 
           taskslist.tasks.forEach((task: Task) => {
