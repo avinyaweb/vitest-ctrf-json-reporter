@@ -34,3 +34,4 @@ export default defineConfig({
 - [ctrf](https://github.com/ctrf-io/github-test-reporter)
 
 author: [Ganesh](https://github.com/ganesh-swami)
+Developed BY : [JavaScript Developer](https://avinyaweb.com/)
