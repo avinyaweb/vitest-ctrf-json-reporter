@@ -122,7 +122,9 @@ class GenerateCtrfReport implements Reporter {
             );
 
             const test: CtrfTest = {
-              name: task.name,
+              name: [task.suite?.name ?? "", task.name]
+                .filter((label) => label.length > 0)
+                .join(" > "),
               duration: task.result?.duration ?? 0,
               status: testStatus,
             };
