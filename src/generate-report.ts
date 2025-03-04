@@ -1,19 +1,26 @@
+import * as fs from "fs";
+import * as path from "path";
+
 import {
-  Task,
+  RunnerTask,
+  RunnerTestSuite,
   TaskState,
   type Awaitable,
-  type File,
-  type Reporter,
-  type Vitest,
+  type RunnerTestFile,
 } from "vitest";
+import {
+  Vitest
+} from 'vitest/node';
+import {
+  Reporter
+} from 'vitest/reporters';
+
 import {
   type CtrfReport,
   type CtrfTestState,
   type CtrfEnvironment,
   type CtrfTest,
 } from "../types/ctrf";
-import * as fs from "fs";
-import * as path from "path";
 
 interface ReporterConfigOptions {
   outputFile?: string;
@@ -78,6 +85,7 @@ class GenerateCtrfReport implements Reporter {
           other: 0,
           start: 0,
           stop: 0,
+          suites: 0,
         },
         tests: [],
       },
@@ -104,31 +112,47 @@ class GenerateCtrfReport implements Reporter {
     this.ctrfReport.results.summary.start = Date.now();
   }
 
-  onFinished(files?: File[], errors?: unknown[]): Awaitable<void> {
+  onFinished(files?: RunnerTestFile[], errors?: unknown[]): Awaitable<void> {
     this.updateCtrfTestResultsFromTestResult(files);
     this.ctrfReport.results.summary.stop = Date.now();
     this.writeReportToFile(this.ctrfReport);
   }
 
-  private updateCtrfTestResultsFromTestResult(files: File[] | undefined): void {
+  private updateCtrfTestResultsFromTestResult(files: RunnerTestFile[] | undefined): void {
     try {
-      files?.forEach((file: File) => {
-        
-        file.tasks.forEach((taskslist: any) => {
+      files?.forEach((file: RunnerTestFile) => {
+        // A file is a "suite" of tests
+        this.ctrfReport.results.summary.suites!++;
 
-          taskslist.tasks.forEach((task: Task) => {
-            const testStatus: CtrfTestState = this.mapStatus(
-              task?.result?.state ? task?.result?.state : task?.mode
-            );
+        // Recursive function to visit each task node and process suites and tests
+        const walkTaskTree = (tasks: RunnerTask[], prefix = '') => {
+          // No tasks so bail early
+          if (!tasks || tasks.length === 0) {
+            return;
+          }
 
+          // Process each task
+          tasks.forEach((task: RunnerTask) => {
+            // If the task is a suite, recursively process its tasks
+            if (task.type === 'suite') {
+              this.ctrfReport.results.summary.suites!++;
+              return walkTaskTree(task.tasks, `${prefix}${task.name} > `);
+            }
+
+            // If the task is not a test, skip it with a complaint
+            if (task.type !== 'test') {
+              console.error('Unknown task type', task);
+              return;
+            }
+
+            // Capture the test and collect summary stats on it
             const test: CtrfTest = {
-              name: [task.suite?.name ?? "", task.name]
-                .filter((label) => label.length > 0)
-                .join(" > "),
+              name: `${prefix}${task.name}`,
               duration: task.result?.duration ?? 0,
-              status: testStatus,
+              status: this.mapStatus(
+                task?.result?.state ? task?.result?.state : task?.mode
+              ),
             };
-
             if (this.reporterConfigOptions.minimal === false) {
               test.message = this.extractFailureDetails(task?.result).message;
               test.trace = this.extractFailureDetails(task?.result).trace;
@@ -138,12 +162,14 @@ class GenerateCtrfReport implements Reporter {
               test.retries = task?.retry ?? 0;
             }
 
-            this.ctrfReport.results.summary[testStatus]++;
+            this.ctrfReport.results.summary[test.status]++;
             this.ctrfReport.results.summary.tests++;
 
             this.ctrfReport.results.tests.push(test);
-          });
-        });
+          })
+        }
+
+        walkTaskTree(file.tasks);
       });
     } catch (error: any) {
       console.error(
