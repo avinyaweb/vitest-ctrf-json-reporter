@@ -15,16 +15,17 @@
     "reporter"
   ],
   "files": [
-    "dist/"
+    "src/"
   ],
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "src/index.js",
+  "types": "src/index.d.ts",
   "scripts": {
     "test": "vitest",
     "clean": "rimraf dist",
     "build": "npm run clean && tsc -p tsconfig.lib.json"
   },
   "devDependencies": {
+    "@types/node": "^22.13.9",
     "@vitest/coverage-v8": "2.1.5",
     "prettier": "^3.3.3",
     "rimraf": "^6.0.1",
