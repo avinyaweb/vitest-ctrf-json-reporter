@@ -22,14 +22,15 @@
   "scripts": {
     "test": "vitest",
     "clean": "rimraf dist",
+    "prettier:write": "prettier --write .",
     "build": "npm run clean && tsc -p tsconfig.lib.json"
   },
   "devDependencies": {
     "@types/node": "^22.13.9",
-    "@vitest/coverage-v8": "2.1.5",
+    "@vitest/runner": "^3.1.1",
     "prettier": "^3.3.3",
     "rimraf": "^6.0.1",
     "typescript": "^5.6.3",
-    "vitest": "^3.0.0"
+    "vitest": "^3.1.1"
   }
 }

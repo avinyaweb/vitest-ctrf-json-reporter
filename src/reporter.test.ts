@@ -1,6 +1,5 @@
-import { describe, expect, it} from 'vitest'
-import  GenerateCtrfReport from './generate-report'
-
+import { describe, expect, it } from 'vitest'
+import GenerateCtrfReport from './generate-report'
 
 describe('VitestGithubReporter', () => {
   it('should be defined', () => {
@@ -16,4 +15,3 @@ describe('VitestGithubReporter', () => {
     expect(true).toBe(false)
   })
 })
-
