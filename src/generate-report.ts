@@ -71,25 +71,19 @@ class GenerateCtrfReport implements Reporter {
       testEnvironment: config?.testEnvironment ?? undefined,
     };
 
-    this.ctrfReport = {
-      results: {
-        tool: {
-          name: "vitest",
-        },
-        summary: {
-          tests: 0,
-          passed: 0,
-          failed: 0,
-          pending: 0,
-          skipped: 0,
-          other: 0,
-          start: 0,
-          stop: 0,
-          suites: 0,
-        },
-        tests: [],
-      },
-    };
+        this.ctrfReport = {
+            schema_version: "0.0.1",
+            results: {
+                tool: "vitest",
+                summary: {
+                    tests: 0,
+                    passed: 0,
+                    failed: 0,
+                    start_time: 0,
+                    stop_time: 0,
+                },
+                tests: [],
+            },
 
     this.ctrfEnvironment = {};
 
@@ -109,12 +103,12 @@ class GenerateCtrfReport implements Reporter {
   }
 
   onInit(ctx: Vitest): Awaitable<void> {
-    this.ctrfReport.results.summary.start = Date.now();
+    this.ctrfReport.results.summary.start_time = Date.now();
   }
 
   onFinished(files?: RunnerTestFile[], errors?: unknown[]): Awaitable<void> {
     this.updateCtrfTestResultsFromTestResult(files);
-    this.ctrfReport.results.summary.stop = Date.now();
+    this.ctrfReport.results.summary.stop_time = Date.now();
     this.writeReportToFile(this.ctrfReport);
   }
 
@@ -148,18 +142,14 @@ class GenerateCtrfReport implements Reporter {
             // Capture the test and collect summary stats on it
             const test: CtrfTest = {
               name: `${prefix}${task.name}`,
-              duration: task.result?.duration ?? 0,
               status: this.mapStatus(
                 task?.result?.state ? task?.result?.state : task?.mode
               ),
+              duration: task.result?.duration ?? 0,
             };
             if (this.reporterConfigOptions.minimal === false) {
               test.message = this.extractFailureDetails(task?.result).message;
-              test.trace = this.extractFailureDetails(task?.result).trace;
-              test.rawStatus = task?.result?.state ?? task?.mode;
-              test.type = this.reporterConfigOptions.testType ?? "unit";
-              test.filePath = task.suite?.file?.name ?? "";
-              test.retries = task?.retry ?? 0;
+              test.log = this.extractFailureDetails(task?.result).log;
             }
 
             this.ctrfReport.results.summary[test.status]++;
@@ -182,12 +172,12 @@ class GenerateCtrfReport implements Reporter {
     if (!taskResult?.errors || taskResult.errors.length === 0) {
       return {
         message: "",
-        trace: "",
+        log: "",
       };
     }
     return {
       message: taskResult.errors[0].message,
-      trace: taskResult.errors[0].stackStr,
+      log: taskResult.errors[0].stackStr,
     };
   }
 
